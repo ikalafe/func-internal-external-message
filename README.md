@@ -1,4 +1,5 @@
-# func-in-ex-msg
+# func-internal-external-message
+Smart contract in FunC for the TON blockchain with internal and external message handling. Focused on secure, optimized design and efficient communication. Ideal for developers exploring TON's messaging mechanisms.
 
 ## Project structure
 
