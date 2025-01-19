@@ -1,13 +1,24 @@
-import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode } from '@ton/core';
+import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode } from '@ton/ton';
 
-export type MainConfig = {};
+export type MainConfig = {
+    seqno: number;
+    publicKey: Buffer;
+    ownerAddress: Address;
+};
 
 export function mainConfigToCell(config: MainConfig): Cell {
-    return beginCell().endCell();
+    return beginCell()
+        .storeUint(config.seqno, 32)
+        .storeBuffer(config.publicKey)
+        .storeAddress(config.ownerAddress)
+        .endCell();
 }
 
 export class Main implements Contract {
-    constructor(readonly address: Address, readonly init?: { code: Cell; data: Cell }) {}
+    constructor(
+        readonly address: Address,
+        readonly init?: { code: Cell; data: Cell },
+    ) {}
 
     static createFromAddress(address: Address) {
         return new Main(address);
