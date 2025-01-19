@@ -96,7 +96,7 @@ int get_smart_contract_balance() method_id {
 
         throw_unless(405, get_smart_contract_balance() >= withdraw_amount);
 
-        int send_amount = min(withdraw_amount,get_balance() - min_tons_for_storage);
+        int send_amount = min(withdraw_amount, get_smart_contract_balance() - min_tons_for_storage);
 
         cell message = begin_cell()
                             .store_uint(0x18, 6)
