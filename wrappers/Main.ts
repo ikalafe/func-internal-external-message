@@ -1,4 +1,5 @@
 import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode } from '@ton/ton';
+import { Opcode } from '../helper/Opcode';
 
 export type MainConfig = {
     seqno: number;
@@ -35,6 +36,34 @@ export class Main implements Contract {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: beginCell().endCell(),
+        });
+    }
+
+    async sendDeposit(provider: ContractProvider, via: Sender, value: bigint) {
+        await provider.internal(via, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell().storeUint(Opcode.deposit, 32).endCell(),
+        });
+    }
+
+    async getBalance(provider: ContractProvider): Promise<bigint> {
+        const result = provider.get('get_smc_balance', []);
+        return (await result).stack.readBigNumber();
+    }
+
+    async sendWithdraw(
+        provider: ContractProvider,
+        via: Sender,
+        opts: {
+            value: bigint;
+            withdrawAmount: bigint;
+        },
+    ) {
+        await provider.internal(via, {
+            value: opts.value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell().storeUint(Opcode.withdrawFunds, 32).storeCoins(opts.withdrawAmount).endCell(),
         });
     }
 }
