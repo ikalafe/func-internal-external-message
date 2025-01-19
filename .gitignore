@@ -14,3 +14,6 @@ dist
 
 # VIM
 Session.vim
+
+#mnemonic
+helper/config/mnemonics.ts
