@@ -15,7 +15,7 @@ export async function run(provider: NetworkProvider) {
         ),
     );
 
-    await main.sendDeploy(provider.sender(), toNano('0.05'));
+    await main.sendDeploy(provider.sender(), toNano('0.5'));
 
     await provider.waitForDeploy(main.address);
 
