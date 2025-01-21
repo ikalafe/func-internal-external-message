@@ -3,8 +3,9 @@ import { Cell, toNano } from '@ton/core';
 import { Main } from '../wrappers/Main';
 import '@ton/test-utils';
 import { compile } from '@ton/blueprint';
-import { KeyPair, mnemonicNew, mnemonicToPrivateKey } from '@ton/crypto';
-import { send } from 'process';
+import { KeyPair, mnemonicNew, mnemonicToPrivateKey, sign } from '@ton/crypto';
+import { randomAddress } from '@ton/test-utils';
+import { Opcode } from '../helper/Opcode';
 
 async function randomKey(): Promise<KeyPair> {
     let mnemonics = await mnemonicNew();
@@ -87,6 +88,47 @@ describe('Main', () => {
             to: main.address,
             success: false,
             exitCode: 411,
+        });
+    });
+
+    it('should be change owner', async () => {
+        const changeOwnerResult = await main.sendChangeOwner(owner.getSender(), {
+            value: toNano(1),
+            newOwner: randomAddress(),
+        });
+
+        expect(changeOwnerResult.transactions).toHaveTransaction({
+            from: owner.address,
+            to: main.address,
+            success: true,
+        });
+    });
+
+    it('should faild on wrong signature', async () => {
+        const badKp = await randomKey();
+
+        expect.assertions(2);
+
+        await expect(
+            main.sendExternalMessage({
+                opCode: Opcode.selfdestruct,
+                signFunc: (buf) => sign(buf, badKp.secretKey),
+                seqno: 0,
+            }),
+        ).rejects.toThrow();
+    });
+
+    it('should accept correct signature', async () => {
+        const selfdestructResult = await main.sendExternalMessage({
+            opCode: Opcode.selfdestruct,
+            signFunc: (buf) => sign(buf, kp.secretKey),
+            seqno: 0,
+        });
+
+        expect(selfdestructResult.transactions).toHaveTransaction({
+            from: main.address,
+            to: owner.address,
+            success: true,
         });
     });
 });
