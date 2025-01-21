@@ -47,11 +47,6 @@ export class Main implements Contract {
         });
     }
 
-    async getBalance(provider: ContractProvider): Promise<bigint> {
-        const result = provider.get('get_smc_balance', []);
-        return (await result).stack.readBigNumber();
-    }
-
     async sendWithdraw(
         provider: ContractProvider,
         via: Sender,
@@ -65,5 +60,38 @@ export class Main implements Contract {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: beginCell().storeUint(Opcode.withdrawFunds, 32).storeCoins(opts.withdrawAmount).endCell(),
         });
+    }
+
+    async sendChangeOwner(provider: ContractProvider, via: Sender, opts: { value: bigint; newOwner: Address }) {
+        await provider.internal(via, {
+            value: opts.value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell().storeUint(Opcode.changeOwner, 32).storeAddress(opts.newOwner).endCell(),
+        });
+    }
+
+    async sendExternalMessage(
+        provider: ContractProvider,
+        opts: {
+            opCode: number;
+            seqno: number;
+            signFunc: (buf: Buffer) => Buffer;
+        },
+    ) {
+        const messageToSign = beginCell().storeUint(opts.seqno, 32).storeUint(opts.opCode, 32).endCell();
+
+        const signature = opts.signFunc(messageToSign.hash());
+
+        await provider.external(beginCell().storeBuffer(signature).storeSlice(messageToSign.asSlice()).endCell());
+    }
+
+    async getBalance(provider: ContractProvider): Promise<bigint> {
+        const result = await provider.get('get_smc_balance', []);
+        return result.stack.readBigNumber();
+    }
+
+    async getSeqno(provider: ContractProvider): Promise<number> {
+        const result = await provider.get('get_seqno', []);
+        return result.stack.readNumber();
     }
 }
